@@ -1,8 +1,14 @@
 "use client";
 
 import { useDispatch, useSelector } from "react-redux";
-import { handleSendCode } from "../redux/reducer/reducer";
 import { useForm, SubmitHandler } from 'react-hook-form';
+import {
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+} from "firebase/auth";
+import { auth } from "../firebase/firebaseConfig";
+import { toast } from "react-toastify";
+import { setCredential } from "../redux/reducer/reducer";
 
 interface FormData {
   mobile_number: string;
@@ -17,9 +23,30 @@ const Sendotp = () => {
 
   const dispatch : any = useDispatch();
 
-  const sendOtp: SubmitHandler<FormData> = (data) => {
-    let mobileNo : any = data;
-    dispatch(handleSendCode(mobileNo.mobile_number));
+  const sendOtp: SubmitHandler<FormData> = async (data) => {
+    const phoneNumber = "+91" + data.mobile_number
+
+    const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha", {
+      size: "invisible",
+    });
+
+    try {
+      const confirmationResult : any =  await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        recaptchaVerifier
+      );
+
+      const data = {
+        verificationId : confirmationResult.verificationId,
+        phoneNumber : phoneNumber
+      }
+      toast.success("Otp sended Successfully");
+      dispatch(setCredential(data))
+    } catch (error : any) {
+      toast.error(error.message);
+      console.error(error);
+    }
   }
 
   return (

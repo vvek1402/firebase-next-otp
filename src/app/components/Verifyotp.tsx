@@ -1,30 +1,53 @@
 "use client";
 import { useDispatch, useSelector } from "react-redux";
-import { handleVerifyCode } from "../redux/reducer/reducer";
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler } from "react-hook-form";
+import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import { auth } from "../firebase/firebaseConfig";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+import { setSession } from "../redux/reducer/reducer";
 
 interface FormData {
   otp: string;
 }
 
-const Verifyotp = (props : any) => {
+const Verifyotp = (props: any) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
 
-  const state : any = useSelector(state => state);
+  const router = useRouter();
   const dispatch : any = useDispatch();
 
+  const state: any = useSelector((state) => state);
+
   const verfiyOtp: SubmitHandler<FormData> = (data) => {
-    const otpData : any = data;
-    // dispatch(handleVerifyCode(otpData.otp));
-  }
+    const otpData: any = data.otp;
+
+    const credential = PhoneAuthProvider.credential(
+      state.otp.verificationId,
+      otpData
+    );
+
+    try {
+      const signin = signInWithCredential(auth, credential);
+
+      signin.then((res : any) => {
+        console.log(res)
+        toast.success("Otp verified, Login Successfull");
+        dispatch(setSession(res.user.accessToken))
+        router.push("welcome");
+      });
+    } catch (error : any) {
+      toast.error(error.message);
+    }
+  };
 
   const reSendOtpHandler = () => {
     props.reSendOtp();
-  }
+  };
 
   return (
     <>
@@ -36,7 +59,10 @@ const Verifyotp = (props : any) => {
                 <p>Email Verification</p>
               </div>
               <div className="flex flex-row text-sm font-medium text-gray-400">
-                <p>We have sent a code to your mobile number { state.otp.phoneNumber }</p>
+                <p>
+                  We have sent a code to your mobile number{" "}
+                  {state.otp.phoneNumber}
+                </p>
               </div>
             </div>
             <div className="mt-2">
@@ -64,12 +90,15 @@ const Verifyotp = (props : any) => {
                     })}
                   />
                   <small className="text-red-500 text-xs italic">
-                  {errors?.otp && errors.otp.message}
-                </small>
+                    {errors?.otp && errors.otp.message}
+                  </small>
                 </div>
                 <div className="flex flex-col space-y-5">
                   <div>
-                    <button onClick={handleSubmit(verfiyOtp)} className="flex flex-row items-center justify-center text-center w-full border rounded-xl outline-none py-5 bg-blue-700 border-none text-white text-sm shadow-sm">
+                    <button
+                      onClick={handleSubmit(verfiyOtp)}
+                      className="flex flex-row items-center justify-center text-center w-full border rounded-xl outline-none py-5 bg-blue-700 border-none text-white text-sm shadow-sm"
+                    >
                       Verify Account
                     </button>
                   </div>
@@ -77,7 +106,7 @@ const Verifyotp = (props : any) => {
                   <div className="flex flex-row items-center justify-center text-center text-sm font-medium space-x-1 text-gray-500">
                     <p>Didnt recieve code?</p>{" "}
                     <button
-                    onClick={() => reSendOtpHandler()}
+                      onClick={() => reSendOtpHandler()}
                       className="flex flex-row items-center text-blue-600"
                     >
                       Resend

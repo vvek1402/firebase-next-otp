@@ -3,8 +3,6 @@ import React, { useEffect, useState } from "react";
 import Sendotp from "./components/Sendotp";
 import { useSelector } from "react-redux";
 import Verifyotp from "./components/Verifyotp";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 const PhoneAuth = () => {
   const state: any = useSelector((state) => state);
@@ -24,7 +22,6 @@ const PhoneAuth = () => {
     <>
       {(!otpflag) ? <Sendotp /> : <Verifyotp reSendOtp={reSendOtp} />}
       <div id="recaptcha"></div>
-      <ToastContainer />
     </>
   );
 };
