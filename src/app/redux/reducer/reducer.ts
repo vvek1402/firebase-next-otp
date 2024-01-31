@@ -1,11 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+let sessionToken = null;
+if (typeof window !== 'undefined') {
+  sessionToken = localStorage.getItem('sessionToken');
+}
+
 const otpSlice = createSlice({
   name: "otpslice",
   initialState: {
     phoneNumber: "",
     verificationId: "",
-    sessionToken: localStorage.getItem("sessionToken"),
+    sessionToken: sessionToken,
   },
   reducers: {
     setCredential: (state, action) => {

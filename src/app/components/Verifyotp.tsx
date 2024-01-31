@@ -6,6 +6,8 @@ import { auth } from "../firebase/firebaseConfig";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { setSession } from "../redux/reducer/reducer";
+import { useState } from "react";
+import { RotatingLines } from "react-loader-spinner";
 
 interface FormData {
   otp: string;
@@ -19,28 +21,28 @@ const Verifyotp = (props: any) => {
   } = useForm<FormData>();
 
   const router = useRouter();
-  const dispatch : any = useDispatch();
+  const dispatch: any = useDispatch();
 
   const state: any = useSelector((state) => state);
+  const [disabled, setDisabled] = useState<Boolean>(false);
 
-  const verfiyOtp: SubmitHandler<FormData> = (data) => {
+  const verfiyOtp: SubmitHandler<FormData> = async (data) => {
     const otpData: any = data.otp;
-
+    setDisabled(true);
     const credential = PhoneAuthProvider.credential(
       state.otp.verificationId,
       otpData
     );
 
     try {
-      const signin = signInWithCredential(auth, credential);
+      const signin: any = await signInWithCredential(auth, credential);
 
-      signin.then((res : any) => {
-        console.log(res)
-        toast.success("Otp verified, Login Successfull");
-        dispatch(setSession(res.user.accessToken))
-        router.push("welcome");
-      });
-    } catch (error : any) {
+      toast.success("Otp verified, Login Successfull");
+      dispatch(setSession(signin.user.accessToken));
+      setDisabled(false);
+      router.push("welcome");
+    } catch (error: any) {
+      setDisabled(false);
       toast.error(error.message);
     }
   };
@@ -97,9 +99,17 @@ const Verifyotp = (props: any) => {
                   <div>
                     <button
                       onClick={handleSubmit(verfiyOtp)}
+                      disabled={disabled as boolean}
                       className="flex flex-row items-center justify-center text-center w-full border rounded-xl outline-none py-5 bg-blue-700 border-none text-white text-sm shadow-sm"
                     >
-                      Verify Account
+                      Verify Account{" "}
+                      <RotatingLines
+                        visible={disabled as boolean}
+                        width="38"
+                        strokeWidth="5"
+                        animationDuration="0.75"
+                        ariaLabel="rotating-lines-loading"
+                      />
                     </button>
                   </div>
 

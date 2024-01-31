@@ -1,14 +1,13 @@
 "use client";
 
 import { useDispatch, useSelector } from "react-redux";
-import { useForm, SubmitHandler } from 'react-hook-form';
-import {
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-} from "firebase/auth";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { toast } from "react-toastify";
 import { setCredential } from "../redux/reducer/reducer";
+import { RotatingLines } from "react-loader-spinner";
+import { useState } from "react";
 
 interface FormData {
   mobile_number: string;
@@ -21,33 +20,38 @@ const Sendotp = () => {
     formState: { errors },
   } = useForm<FormData>();
 
-  const dispatch : any = useDispatch();
+  const dispatch: any = useDispatch();
+
+  const [disabled, setDisabled] = useState<Boolean>(false);
 
   const sendOtp: SubmitHandler<FormData> = async (data) => {
-    const phoneNumber = "+91" + data.mobile_number
+    const phoneNumber = "+91" + data.mobile_number;
 
+    setDisabled(true);
     const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha", {
       size: "invisible",
     });
 
     try {
-      const confirmationResult : any =  await signInWithPhoneNumber(
+      const confirmationResult: any = await signInWithPhoneNumber(
         auth,
         phoneNumber,
         recaptchaVerifier
       );
 
       const data = {
-        verificationId : confirmationResult.verificationId,
-        phoneNumber : phoneNumber
-      }
+        verificationId: confirmationResult.verificationId,
+        phoneNumber: phoneNumber,
+      };
       toast.success("Otp sended Successfully");
-      dispatch(setCredential(data))
-    } catch (error : any) {
+      setDisabled(false);
+      dispatch(setCredential(data));
+    } catch (error: any) {
+      setDisabled(false);
       toast.error(error.message);
       console.error(error);
     }
-  }
+  };
 
   return (
     <>
@@ -90,21 +94,34 @@ const Sendotp = () => {
                       required: "Mobile number is required",
                       minLength: {
                         value: 10,
-                        message: "Mobile number must be at least 10 digits long",
+                        message:
+                          "Mobile number must be at least 10 digits long",
                       },
                       maxLength: {
                         value: 10,
                         message: "Mobile number must not exceed 10 digits",
                       },
-                    })}                    
+                    })}
                   />
                 </div>
                 <div>
-                <small className="text-red-500 text-xs italic">
-                  {errors?.mobile_number && errors.mobile_number.message}
-                </small>
-                  <button onClick={handleSubmit(sendOtp)} className="flex flex-row items-center justify-center text-center w-full border rounded-xl outline-none py-5 bg-blue-700 border-none text-white text-sm shadow-sm">
-                    Send Otp
+                  <small className="text-red-500 text-xs italic">
+                    {errors?.mobile_number && errors.mobile_number.message}
+                  </small>
+
+                  <button
+                    disabled={disabled as boolean}
+                    onClick={handleSubmit(sendOtp)}
+                    className="flex flex-row items-center justify-center text-center w-full border rounded-xl outline-none py-5 bg-blue-700 border-none text-white text-sm shadow-sm"
+                  >
+                    Send Otp{" "}
+                    <RotatingLines
+                      visible={disabled as boolean}
+                      width="38"
+                      strokeWidth="5"
+                      animationDuration="0.75"
+                      ariaLabel="rotating-lines-loading"
+                    />
                   </button>
                 </div>
               </div>
